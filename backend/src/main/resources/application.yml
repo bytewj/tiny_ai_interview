@@ -13,3 +13,11 @@ spring:
       port: 6379
       database: 0
       password: 123456
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  active-timeout: -1
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+  is-write-header: true

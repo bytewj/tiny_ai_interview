@@ -3,406 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 面试平台 - 沟通</title>
+    <title>Tiny Chat - 企业级沟通</title>
     <style>
+        /* 保持之前的样式不变，为了节省篇幅我省略样式代码，你自己保留之前的 style 标签即可 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f2f2f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #333;
-        }
-
-        /* 手机外壳模拟 */
-        .phone-container {
-            width: 375px;
-            height: 700px;
-            background: #fff;
-            border-radius: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 8px solid #333;
-            position: relative;
-        }
-
-        /* 顶部导航栏 */
-        .header {
-            background: #f8f8f8;
-            padding: 40px 15px 15px;
-            border-bottom: 1px solid #e5e5e5;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .header-title {
-            font-weight: 600;
-            font-size: 17px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #ff3b30;
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
-
-        .login-bar {
-            display: flex;
-            gap: 8px;
-            padding: 5px;
-            background: #fff;
-            border-radius: 10px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-input {
-            border: none;
-            background: #f0f0f0;
-            padding: 8px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 12px;
-            outline: none;
-        }
-
-        .btn-primary {
-            background-color: #007aff;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn-primary:active { opacity: 0.7; }
-        .btn-primary:disabled { background-color: #ccc; cursor: default; }
-
-        /* 聊天区域 */
-        .chat-area {
-            flex: 1;
-            background-color: #ededed;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 75%;
-            padding: 10px 14px;
-            font-size: 15px;
-            line-height: 1.4;
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        .message.me {
-            align-self: flex-end;
-            background-color: #95ec69;
-            color: #000;
-            border-radius: 8px 2px 8px 8px;
-        }
-
-        .message.other {
-            align-self: flex-start;
-            background-color: #fff;
-            color: #000;
-            border-radius: 2px 8px 8px 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .sender-name {
-            font-size: 10px;
-            color: #999;
-            margin-bottom: 2px;
-            position: absolute;
-            top: -16px;
-        }
-        .me .sender-name { right: 0; }
-        .other .sender-name { left: 0; }
-
-        .sys-msg {
-            align-self: center;
-            background-color: rgba(0,0,0,0.1);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            margin: 5px 0;
-            text-align: center;
-        }
-
-        /* 底部输入栏 */
-        .footer {
-            background: #f6f6f6;
-            padding: 10px;
-            border-top: 1px solid #dcdcdc;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .target-input {
-            width: 60px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 12px;
-            text-align: center;
-            outline: none;
-        }
-
-        select.target-input {
-            width: 70px;
-            background-color: #fff;
-        }
-
-        .msg-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .send-btn {
-            background: #95ec69;
-            color: #000;
-            border: none;
-            width: 50px;
-            height: 36px;
-            border-radius: 4px;
-            font-size: 13px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .send-btn:hover { background: #85dc59; }
-
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: #fff; padding: 30px; border-radius: 10px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .login-box button { width: 100%; padding: 12px; background: #07c160; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .app-container { width: 900px; height: 650px; background: #fff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; overflow: hidden; display: none; }
+        .sidebar { width: 260px; background: #e7e6e6; border-right: 1px solid #d6d6d6; display: flex; flex-direction: column; }
+        .my-profile { padding: 20px; background: #f5f5f5; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e0e0e0; }
+        .my-avatar { width: 40px; height: 40px; border-radius: 4px; }
+        .user-list { flex: 1; overflow-y: auto; }
+        .user-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; }
+        .user-item:hover { background: #dcdcdc; }
+        .user-item.active { background: #c6c6c6; }
+        .u-avatar { width: 36px; height: 36px; border-radius: 4px; }
+        .u-info { display: flex; flex-direction: column; }
+        .u-name { font-size: 14px; color: #000; font-weight: 500; }
+        .u-role { font-size: 12px; color: #666; }
+        .chat-window { flex: 1; display: flex; flex-direction: column; background: #f5f5f5; }
+        .chat-header { height: 60px; border-bottom: 1px solid #e7e7e7; display: flex; align-items: center; padding: 0 20px; font-size: 18px; font-weight: 500; }
+        .chat-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .chat-input-area { height: 150px; border-top: 1px solid #e7e7e7; background: #fff; display: flex; flex-direction: column; }
+        textarea { flex: 1; border: none; padding: 15px 20px; font-size: 15px; resize: none; outline: none; font-family: inherit; }
+        .send-bar { padding: 10px 20px; text-align: right; }
+        .send-btn { background: #e9e9e9; color: #07c160; border: 1px solid #e7e7e7; padding: 6px 20px; border-radius: 4px; cursor: pointer; }
+        .send-btn:hover { background: #d2d2d2; }
+        .msg-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .msg-row.me { flex-direction: row-reverse; }
+        .msg-avatar { width: 36px; height: 36px; border-radius: 4px; }
+        .msg-bubble { max-width: 60%; padding: 10px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5; position: relative; }
+        .msg-row.other .msg-bubble { background: #fff; border: 1px solid #ededed; }
+        .msg-row.me .msg-bubble { background: #95ec69; border: 1px solid #86d658; }
+        .sys-msg { text-align: center; color: #ccc; font-size: 12px; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-<div class="phone-container">
-    <div class="header">
-        <div class="header-title">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">未连接</span>
-        </div>
-
-        <div class="login-bar">
-            <span style="font-size: 10px; color: #999;">我是:</span>
-            <select id="myRole" class="login-input" style="width: 70px;">
-                <option value="1">求职者</option>
-                <option value="2">HR</option>
-            </select>
-
-            <input type="text" id="myId" class="login-input" value="1001" placeholder="ID" style="width: 60px;">
-            <button class="btn-primary" id="connectBtn" onclick="connect()">上线</button>
-        </div>
+<div id="loginModal">
+    <div class="login-box">
+        <h3>Tiny Chat 登录</h3>
+        <p style="color:#666; font-size:12px; margin-bottom:20px;">账号: candidate / hr_byte <br> 密码: 123456</p>
+        <input type="text" id="username" placeholder="账号">
+        <input type="password" id="password" placeholder="密码">
+        <button onclick="doLogin()">登 录</button>
     </div>
+</div>
 
-    <div class="chat-area" id="msgBox">
-        <div class="sys-msg">请先点击顶部“上线”按钮连接服务器</div>
-    </div>
-
-    <div class="footer">
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-            <span style="font-size: 10px; color: #999;">发给:</span>
-            <select id="toRole" class="target-input">
-                <option value="2">HR</option>
-                <option value="1">求职者</option>
-            </select>
-            <input type="text" id="toId" class="target-input" value="1002" placeholder="对方ID" style="width: 70px; margin-top:2px;">
+<div class="app-container" id="app">
+    <div class="sidebar">
+        <div class="my-profile">
+            <img id="myAvatar" class="my-avatar" src="">
+            <div>
+                <div id="myNickname" style="font-weight:bold; font-size:14px;"></div>
+                <div id="myRoleTag" style="font-size:12px; color:#666;"></div>
+            </div>
         </div>
-        <input type="text" id="content" class="msg-input" placeholder="输入新消息..." onkeydown="handleEnter(event)">
-        <button class="send-btn" onclick="send()">发送</button>
+        <div class="user-list" id="contactList"></div>
+    </div>
+    <div class="chat-window">
+        <div class="chat-header" id="chatTitle">请选择联系人开始聊天</div>
+        <div class="chat-content" id="msgBox"></div>
+        <div class="chat-input-area">
+            <textarea id="inputContent" placeholder="在此输入..." onkeydown="handleEnter(event)"></textarea>
+            <div class="send-bar"><button class="send-btn" onclick="sendMessage()">发送(S)</button></div>
+        </div>
     </div>
 </div>
 
 <script>
-    let ws;
-    let myId;
-    let myRole; // 保存当前身份
+    let currentUser = null;
+    let targetUser = null;
+    let ws = null;
 
-    function connect() {
-        myId = document.getElementById("myId").value;
-        myRole = document.getElementById("myRole").value;
+    // ✅ 一进来就执行：检查自动登录
+    checkLogin();
 
-        if(!myId) return alert("请输入用户ID");
+    // 1. 自动登录逻辑
+    async function checkLogin() {
+        const token = localStorage.getItem('satoken');
+        if(!token) return; // 没Token，停在登录页
 
-        const btn = document.getElementById("connectBtn");
-        btn.disabled = true;
-        btn.innerText = "连接中...";
-
-        // WebSocket 连接 (带身份)
-        ws = new WebSocket(`ws://localhost:8080/api/chat/${myRole}/${myId}`);
-
-        ws.onopen = () => {
-            updateStatus(true);
-            log("System", `已作为 [${myRole==1?'求职者':'HR'}] 上线`, "sys");
-            btn.innerText = "已上线";
-
-            // ✅ 连接成功后，立刻拉取历史记录
-            loadHistory();
-        };
-
-        ws.onmessage = (e) => {
-            console.log("Raw Msg:", e.data);
-            try {
-                let data = JSON.parse(e.data);
-
-                // 处理收到的 JSON 消息
-                if(data.type === undefined || data.type === 'chat') {
-                    // 兼容处理：如果后端直接转发了原始JSON，或者封装了 type='chat'
-                    // 这里我们假设 data 里肯定有 senderId 和 content
-                    // 如果对方发过来，显示在左边
-                    log(data.senderId, data.content, "other");
-                }
-                else if(data.type === 'system') {
-                    console.log("系统消息:", data.content);
-                }
-            } catch (err) {
-                console.log("Received text:", e.data);
-            }
-        };
-
-        ws.onclose = () => {
-            updateStatus(false);
-            btn.disabled = false;
-            btn.innerText = "上线";
-            log("System", "连接已断开", "sys");
-        };
-
-        ws.onerror = (err) => {
-            console.error("WS Error:", err);
-            updateStatus(false);
-        };
-    }
-
-    // ✅ 新增：拉取历史记录函数
-    function loadHistory() {
-        let toId = document.getElementById("toId").value;
-        let toRole = document.getElementById("toRole").value;
-
-        // 调用后端接口
-        fetch(`http://localhost:8080/api/chat/history?myId=${myId}&myType=${myRole}&toId=${toId}&toType=${toRole}`)
-            .then(res => res.json())
-            .then(list => {
-                // 清空当前界面（防止重复）
-                document.getElementById("msgBox").innerHTML = '';
-
-                // 遍历并显示历史消息
-                list.forEach(msg => {
-                    // 判断这条消息是不是我发的
-                    // 注意：后端返回的是 Long 类型，JS里用 == 比较安全
-                    let isMe = (msg.senderId == myId && msg.senderType == myRole);
-
-                    if(isMe) {
-                        log("我", msg.content, "me");
-                    } else {
-                        log(msg.senderId, msg.content, "other");
-                    }
-                });
-
-                // 加一条系统提示
-                let sysDiv = document.createElement("div");
-                sysDiv.className = "sys-msg";
-                sysDiv.innerText = "——— 以上是历史消息 ———";
-                document.getElementById("msgBox").appendChild(sysDiv);
-            })
-            .catch(err => {
-                console.error("加载历史记录失败:", err);
+        try {
+            // 请求后端 /info 接口，必须要带 Header
+            const res = await fetch('http://localhost:8080/api/auth/info', {
+                headers: { 'satoken': token }
             });
+            // 如果后端拦截器发现 token 过期，会返回 401 或 error json，这里需要处理
+            if (res.status !== 200) throw new Error("Token失效");
+
+            const result = await res.json();
+            if(result.code === 200) {
+                console.log("自动登录成功:", result.data);
+                enterApp(result.data); // 进系统
+            } else {
+                localStorage.removeItem('satoken'); // Token 无效，清空
+            }
+        } catch(e) {
+            console.error("自动登录失败", e);
+            localStorage.removeItem('satoken');
+        }
     }
 
-    function send() {
-        if(!ws || ws.readyState !== 1) {
-            alert("请先连接服务器！");
-            return;
-        }
+    // 2. 手动登录
+    async function doLogin() {
+        const u = document.getElementById("username").value;
+        const p = document.getElementById("password").value;
+        try {
+            const res = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const result = await res.json();
+            if(result.code === 200) {
+                localStorage.setItem('satoken', result.data.token); // 存 Token
+                enterApp(result.data.user);
+            } else {
+                alert(result.msg || "登录失败");
+            }
+        } catch(e) { alert("网络错误"); }
+    }
 
-        let toId = document.getElementById("toId").value;
-        let toRole = document.getElementById("toRole").value;
-        let content = document.getElementById("content").value;
+    // 进入系统的统一逻辑
+    function enterApp(user) {
+        currentUser = user;
+        document.getElementById('myAvatar').src = user.avatar;
+        document.getElementById('myNickname').innerText = user.nickname;
+        document.getElementById('myRoleTag').innerText = user.role === 1 ? '求职者' : 'HR';
 
-        if(!content) return;
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
 
-        // 构造完整的消息包
-        let msg = {
-            senderId: parseInt(myId),
-            senderType: parseInt(myRole),
-            receiverId: parseInt(toId),
-            receiverType: parseInt(toRole),
-            content: content
+        initWebSocket();
+        loadContacts();
+    }
+
+    // 3. 加载联系人 (注意：加了 Header!)
+    async function loadContacts() {
+        const token = localStorage.getItem('satoken');
+        const res = await fetch(`http://localhost:8080/api/auth/contacts?myId=${currentUser.id}`, {
+            headers: { 'satoken': token } // ✅ 必须加这个，不然会被拦截
+        });
+        const result = await res.json();
+        const list = document.getElementById('contactList');
+        list.innerHTML = '';
+
+        result.data.forEach(user => {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.onclick = () => selectChat(user, div);
+            div.innerHTML = `
+                <img class="u-avatar" src="${user.avatar}">
+                <div class="u-info"><div class="u-name">${user.nickname}</div><div class="u-role">${user.role===1?'求职者':'HR'}</div></div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function selectChat(user, domElement) {
+        targetUser = user;
+        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+        domElement.classList.add('active');
+        document.getElementById('chatTitle').innerText = user.nickname;
+        document.getElementById('msgBox').innerHTML = '';
+        loadHistory();
+    }
+
+    // 4. WebSocket (暂不加鉴权)
+    function initWebSocket() {
+        if(ws) ws.close();
+        ws = new WebSocket(`ws://localhost:8080/api/chat/${currentUser.role}/${currentUser.id}`);
+        ws.onopen = () => console.log("WS Connected");
+        ws.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                if(targetUser && msg.senderId === targetUser.id) {
+                    renderMsg(msg.content, false, targetUser.avatar);
+                }
+            } catch(e) {}
         };
+    }
 
-        // 发送给后端
+    // 5. 加载历史 (注意：加了 Header!)
+    async function loadHistory() {
+        if(!targetUser) return;
+        const token = localStorage.getItem('satoken');
+        const url = `http://localhost:8080/api/chat/history?myId=${currentUser.id}&myType=${currentUser.role}&toId=${targetUser.id}&toType=${targetUser.role}`;
+
+        const res = await fetch(url, {
+            headers: { 'satoken': token } // ✅ 必须加这个
+        });
+        const list = await res.json();
+
+        list.forEach(msg => {
+            const isMe = (msg.senderId == currentUser.id);
+            const avatar = isMe ? currentUser.avatar : targetUser.avatar;
+            renderMsg(msg.content, isMe, avatar);
+        });
+    }
+
+    function sendMessage() {
+        if(!targetUser) return alert("请先选择联系人");
+        const input = document.getElementById('inputContent');
+        const text = input.value.trim();
+        if(!text) return;
+        const msg = {
+            senderId: currentUser.id, senderType: currentUser.role,
+            receiverId: targetUser.id, receiverType: targetUser.role,
+            content: text
+        };
         ws.send(JSON.stringify(msg));
+        renderMsg(text, true, currentUser.avatar);
+        input.value = '';
+    }
 
-        // 自己的消息直接上屏
-        log("我", content, "me");
-
-        document.getElementById("content").value = "";
+    function renderMsg(content, isMe, avatarUrl) {
+        const box = document.getElementById('msgBox');
+        const row = document.createElement('div');
+        row.className = `msg-row ${isMe ? 'me' : 'other'}`;
+        row.innerHTML = `<img class="msg-avatar" src="${avatarUrl}"><div class="msg-bubble">${content}</div>`;
+        box.appendChild(row);
+        box.scrollTop = box.scrollHeight;
     }
 
     function handleEnter(e) {
-        if(e.key === 'Enter') send();
-    }
-
-    function updateStatus(isOnline) {
-        const dot = document.getElementById("statusDot");
-        const text = document.getElementById("statusText");
-        if(isOnline) {
-            dot.style.backgroundColor = "#34c759";
-            text.innerText = "在线";
-        } else {
-            dot.style.backgroundColor = "#ff3b30";
-            text.innerText = "未连接";
+        if(e.key === 'Enter' && !e.ctrlKey) {
+            e.preventDefault();
+            sendMessage();
         }
-    }
-
-    function log(who, text, type) {
-        const box = document.getElementById("msgBox");
-        const div = document.createElement("div");
-
-        if (type === 'sys') {
-            div.className = "sys-msg";
-            div.innerText = text;
-        } else {
-            div.className = `message ${type}`;
-            div.innerText = text;
-
-            if(type === 'other') {
-                const nameTag = document.createElement("span");
-                nameTag.className = "sender-name";
-                nameTag.innerText = "用户 " + who;
-                div.appendChild(nameTag);
-            }
-        }
-
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
     }
 </script>
-
 </body>
 </html>
