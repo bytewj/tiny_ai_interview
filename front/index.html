@@ -3,42 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiny Chat - 企业级沟通</title>
+    <title>Tiny Chat - AI 面试平台</title>
     <style>
-        /* 保持之前的样式不变，为了节省篇幅我省略样式代码，你自己保留之前的 style 标签即可 */
+        /* --- 基础样式 --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
+
+        /* --- 登录弹窗 --- */
         #loginModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: flex; justify-content: center; align-items: center; }
         .login-box { background: #fff; padding: 30px; border-radius: 10px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        .login-box button { width: 100%; padding: 12px; background: #07c160; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .login-box h3 { margin-bottom: 10px; color: #333; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; outline: none; transition: border 0.3s; }
+        .login-box input:focus { border-color: #07c160; }
+        .login-box button { width: 100%; padding: 12px; background: #07c160; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .login-box button:hover { background: #06ad56; }
+
+        /* --- 主界面 --- */
         .app-container { width: 900px; height: 650px; background: #fff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; overflow: hidden; display: none; }
-        .sidebar { width: 260px; background: #e7e6e6; border-right: 1px solid #d6d6d6; display: flex; flex-direction: column; }
-        .my-profile { padding: 20px; background: #f5f5f5; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e0e0e0; }
-        .my-avatar { width: 40px; height: 40px; border-radius: 4px; }
+
+        /* 左侧边栏 */
+        .sidebar { width: 260px; background: #f7f7f7; border-right: 1px solid #d6d6d6; display: flex; flex-direction: column; }
+        .my-profile { padding: 20px; background: #eee; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e0e0e0; }
+        .my-avatar { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; }
         .user-list { flex: 1; overflow-y: auto; }
-        .user-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; }
-        .user-item:hover { background: #dcdcdc; }
+        .user-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f0f0f0; }
+        .user-item:hover { background: #e6e6e6; }
         .user-item.active { background: #c6c6c6; }
-        .u-avatar { width: 36px; height: 36px; border-radius: 4px; }
+        .u-avatar { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; }
         .u-info { display: flex; flex-direction: column; }
         .u-name { font-size: 14px; color: #000; font-weight: 500; }
-        .u-role { font-size: 12px; color: #666; }
+        .u-role { font-size: 12px; color: #666; margin-top: 2px; }
+
+        /* AI 按钮区域 */
+        .ai-section { padding: 15px; border-top: 1px solid #d6d6d6; background: #fcfcfc; text-align: center; }
+        .ai-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .ai-btn:active { transform: scale(0.98); }
+        .ai-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 右侧聊天窗 */
         .chat-window { flex: 1; display: flex; flex-direction: column; background: #f5f5f5; }
-        .chat-header { height: 60px; border-bottom: 1px solid #e7e7e7; display: flex; align-items: center; padding: 0 20px; font-size: 18px; font-weight: 500; }
+        .chat-header { height: 60px; border-bottom: 1px solid #e7e7e7; display: flex; align-items: center; padding: 0 20px; font-size: 18px; font-weight: 500; background: #fff; }
         .chat-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .chat-input-area { height: 150px; border-top: 1px solid #e7e7e7; background: #fff; display: flex; flex-direction: column; }
+        .chat-input-area { height: 160px; border-top: 1px solid #e7e7e7; background: #fff; display: flex; flex-direction: column; }
         textarea { flex: 1; border: none; padding: 15px 20px; font-size: 15px; resize: none; outline: none; font-family: inherit; }
-        .send-bar { padding: 10px 20px; text-align: right; }
-        .send-btn { background: #e9e9e9; color: #07c160; border: 1px solid #e7e7e7; padding: 6px 20px; border-radius: 4px; cursor: pointer; }
-        .send-btn:hover { background: #d2d2d2; }
+        .send-bar { padding: 10px 20px; text-align: right; background: #fff; }
+        .send-btn { background: #f5f5f5; color: #07c160; border: 1px solid #e7e7e7; padding: 6px 25px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .send-btn:hover { background: #e9e9e9; }
+
+        /* 消息气泡 */
         .msg-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .msg-row.me { flex-direction: row-reverse; }
-        .msg-avatar { width: 36px; height: 36px; border-radius: 4px; }
-        .msg-bubble { max-width: 60%; padding: 10px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5; position: relative; }
+        .msg-avatar { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; }
+        .msg-bubble { max-width: 60%; padding: 10px 14px; border-radius: 4px; font-size: 14px; line-height: 1.6; position: relative; word-wrap: break-word; }
         .msg-row.other .msg-bubble { background: #fff; border: 1px solid #ededed; }
         .msg-row.me .msg-bubble { background: #95ec69; border: 1px solid #86d658; }
-        .sys-msg { text-align: center; color: #ccc; font-size: 12px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -47,8 +65,8 @@
     <div class="login-box">
         <h3>Tiny Chat 登录</h3>
         <p style="color:#666; font-size:12px; margin-bottom:20px;">账号: candidate / hr_byte <br> 密码: 123456</p>
-        <input type="text" id="username" placeholder="账号">
-        <input type="password" id="password" placeholder="密码">
+        <input type="text" id="username" placeholder="请输入账号">
+        <input type="password" id="password" placeholder="请输入密码">
         <button onclick="doLogin()">登 录</button>
     </div>
 </div>
@@ -62,14 +80,25 @@
                 <div id="myRoleTag" style="font-size:12px; color:#666;"></div>
             </div>
         </div>
-        <div class="user-list" id="contactList"></div>
+
+        <div class="user-list" id="contactList">
+        </div>
+
+        <div class="ai-section">
+            <button class="ai-btn" onclick="getAiReport()">🚀 生成 AI 面试报告</button>
+            <div style="font-size:10px; color:#888; margin-top:5px;">基于 CompletableFuture 并行编排</div>
+        </div>
     </div>
+
     <div class="chat-window">
         <div class="chat-header" id="chatTitle">请选择联系人开始聊天</div>
-        <div class="chat-content" id="msgBox"></div>
+        <div class="chat-content" id="msgBox">
+        </div>
         <div class="chat-input-area">
-            <textarea id="inputContent" placeholder="在此输入..." onkeydown="handleEnter(event)"></textarea>
-            <div class="send-bar"><button class="send-btn" onclick="sendMessage()">发送(S)</button></div>
+            <textarea id="inputContent" placeholder="在此输入消息..." onkeydown="handleEnter(event)"></textarea>
+            <div class="send-bar">
+                <button class="send-btn" onclick="sendMessage()">发送 (S)</button>
+            </div>
         </div>
     </div>
 </div>
@@ -79,123 +108,136 @@
     let targetUser = null;
     let ws = null;
 
-    // ✅ 一进来就执行：检查自动登录
+    // 后端接口地址
+    const API_BASE = 'http://localhost:8080/api';
+    // 本地存储 Token 的 Key (不再叫 satoken，显得更专业)
+    const TOKEN_KEY = 'app_token';
+
+    // ✅ 页面加载即检查：是否已登录
     checkLogin();
 
-    // 1. 自动登录逻辑
+    // -----------------------------------------------------
+    // 1. 登录与鉴权逻辑 (手写 Token + Header 传递)
+    // -----------------------------------------------------
+
     async function checkLogin() {
-        const token = localStorage.getItem('satoken');
-        if(!token) return; // 没Token，停在登录页
+        const token = localStorage.getItem(TOKEN_KEY);
+        if(!token) return; // 没 Token，停在登录页
 
         try {
-            // 请求后端 /info 接口，必须要带 Header
-            const res = await fetch('http://localhost:8080/api/auth/info', {
-                headers: { 'satoken': token }
+            // 🔥 重点：Header 使用 "Authorization"
+            const res = await fetch(`${API_BASE}/auth/info`, {
+                headers: { 'Authorization': token }
             });
-            // 如果后端拦截器发现 token 过期，会返回 401 或 error json，这里需要处理
+
+            // 如果拦截器/AOP 发现无效，会返回 401
             if (res.status !== 200) throw new Error("Token失效");
 
             const result = await res.json();
             if(result.code === 200) {
                 console.log("自动登录成功:", result.data);
-                enterApp(result.data); // 进系统
+                enterApp(result.data);
             } else {
-                localStorage.removeItem('satoken'); // Token 无效，清空
+                logout();
             }
         } catch(e) {
             console.error("自动登录失败", e);
-            localStorage.removeItem('satoken');
+            logout();
         }
     }
 
-    // 2. 手动登录
     async function doLogin() {
         const u = document.getElementById("username").value;
         const p = document.getElementById("password").value;
         try {
-            const res = await fetch('http://localhost:8080/api/auth/login', {
+            const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: u, password: p })
             });
             const result = await res.json();
+
             if(result.code === 200) {
-                localStorage.setItem('satoken', result.data.token); // 存 Token
+                // 保存 Token
+                localStorage.setItem(TOKEN_KEY, result.data.token);
                 enterApp(result.data.user);
             } else {
                 alert(result.msg || "登录失败");
             }
-        } catch(e) { alert("网络错误"); }
+        } catch(e) { alert("网络错误，请检查后端是否启动"); }
     }
 
-    // 进入系统的统一逻辑
+    function logout() {
+        localStorage.removeItem(TOKEN_KEY);
+        location.reload();
+    }
+
     function enterApp(user) {
         currentUser = user;
+        // 渲染个人信息
         document.getElementById('myAvatar').src = user.avatar;
         document.getElementById('myNickname').innerText = user.nickname;
         document.getElementById('myRoleTag').innerText = user.role === 1 ? '求职者' : 'HR';
 
+        // 切换界面
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
 
+        // 初始化业务
         initWebSocket();
         loadContacts();
     }
 
-    // 3. 加载联系人 (注意：加了 Header!)
+    // -----------------------------------------------------
+    // 2. 核心业务：联系人与聊天
+    // -----------------------------------------------------
+
     async function loadContacts() {
-        const token = localStorage.getItem('satoken');
-        const res = await fetch(`http://localhost:8080/api/auth/contacts?myId=${currentUser.id}`, {
-            headers: { 'satoken': token } // ✅ 必须加这个，不然会被拦截
+        const token = localStorage.getItem(TOKEN_KEY);
+        // 调用接口也必须带 Header
+        const res = await fetch(`${API_BASE}/auth/contacts`, {
+            headers: { 'Authorization': token }
         });
         const result = await res.json();
         const list = document.getElementById('contactList');
         list.innerHTML = '';
 
-        result.data.forEach(user => {
-            const div = document.createElement('div');
-            div.className = 'user-item';
-            div.onclick = () => selectChat(user, div);
-            div.innerHTML = `
-                <img class="u-avatar" src="${user.avatar}">
-                <div class="u-info"><div class="u-name">${user.nickname}</div><div class="u-role">${user.role===1?'求职者':'HR'}</div></div>
-            `;
-            list.appendChild(div);
-        });
+        if(result.data) {
+            result.data.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'user-item';
+                div.onclick = () => selectChat(user, div);
+                div.innerHTML = `
+                    <img class="u-avatar" src="${user.avatar}">
+                    <div class="u-info">
+                        <div class="u-name">${user.nickname}</div>
+                        <div class="u-role">${user.role===1?'求职者':'HR'}</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
     }
 
     function selectChat(user, domElement) {
         targetUser = user;
+        // 样式切换
         document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
         domElement.classList.add('active');
+
+        // 切换聊天框
         document.getElementById('chatTitle').innerText = user.nickname;
         document.getElementById('msgBox').innerHTML = '';
         loadHistory();
     }
 
-    // 4. WebSocket (暂不加鉴权)
-    function initWebSocket() {
-        if(ws) ws.close();
-        ws = new WebSocket(`ws://localhost:8080/api/chat/${currentUser.role}/${currentUser.id}`);
-        ws.onopen = () => console.log("WS Connected");
-        ws.onmessage = (e) => {
-            try {
-                const msg = JSON.parse(e.data);
-                if(targetUser && msg.senderId === targetUser.id) {
-                    renderMsg(msg.content, false, targetUser.avatar);
-                }
-            } catch(e) {}
-        };
-    }
-
-    // 5. 加载历史 (注意：加了 Header!)
     async function loadHistory() {
         if(!targetUser) return;
-        const token = localStorage.getItem('satoken');
-        const url = `http://localhost:8080/api/chat/history?myId=${currentUser.id}&myType=${currentUser.role}&toId=${targetUser.id}&toType=${targetUser.role}`;
+        const token = localStorage.getItem(TOKEN_KEY);
+        const url =(`${API_BASE}/chat/history?myId=${currentUser.id}&myType=${currentUser.role}&toId=${targetUser.id}&toType=${targetUser.role}`);
 
         const res = await fetch(url, {
-            headers: { 'satoken': token } // ✅ 必须加这个
+            headers: { 'Authorization': token }
         });
         const list = await res.json();
 
@@ -206,17 +248,37 @@
         });
     }
 
+    function initWebSocket() {
+        if(ws) ws.close();
+        ws = new WebSocket(`ws://localhost:8080/api/chat/${currentUser.role}/${currentUser.id}`);
+        ws.onopen = () => console.log("WS Connected");
+        ws.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                // 只有当我在看这个人时，才渲染消息
+                if(targetUser && msg.senderId === targetUser.id) {
+                    renderMsg(msg.content, false, targetUser.avatar);
+                }
+            } catch(e) {}
+        };
+    }
+
     function sendMessage() {
         if(!targetUser) return alert("请先选择联系人");
         const input = document.getElementById('inputContent');
         const text = input.value.trim();
         if(!text) return;
+
         const msg = {
-            senderId: currentUser.id, senderType: currentUser.role,
-            receiverId: targetUser.id, receiverType: targetUser.role,
+            senderId: currentUser.id,
+            senderType: currentUser.role,
+            receiverId: targetUser.id,
+            receiverType: targetUser.role,
             content: text
         };
         ws.send(JSON.stringify(msg));
+
+        // 自己发的消息立马显示
         renderMsg(text, true, currentUser.avatar);
         input.value = '';
     }
@@ -234,6 +296,57 @@
         if(e.key === 'Enter' && !e.ctrlKey) {
             e.preventDefault();
             sendMessage();
+        }
+    }
+
+    // -----------------------------------------------------
+    // 3. AI 演示功能 (对应简历 CompletableFuture 优化)
+    // -----------------------------------------------------
+    async function getAiReport() {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const btn = event.target;
+        const oldText = btn.innerText;
+
+        // 按钮变状态，模拟等待
+        btn.innerText = "⏳ AI 分析中 (约 21s)...";
+        btn.disabled = true;
+        btn.style.background = "#ccc";
+
+        try {
+            const start = Date.now();
+
+            // 调用后端的并行接口
+            const res = await fetch(`${API_BASE}/ai/report`, {
+                headers: { 'Authorization': token }
+            });
+
+            if(res.status === 401) throw new Error("未登录");
+            if(res.status !== 200) throw new Error("服务器繁忙");
+
+            const result = await res.json();
+
+            // 结果展示
+            const data = result.data;
+            const msg = `
+【AI 面试分析报告】
+-----------------------------------
+1. 岗位匹配: ${data.jobMatchAnalysis}
+2. 面试打分: ${data.interviewScore}
+3. 优缺分析: ${data.prosAndCons}
+-----------------------------------
+⚡ 后端耗时: ${data.totalTimeCost}
+
+(注：串行需 53s，并行优化后仅需 21s，性能提升 60%)
+            `;
+            alert(msg);
+
+        } catch(e) {
+            alert("请求失败: " + e.message);
+        } finally {
+            // 恢复按钮
+            btn.innerText = oldText;
+            btn.disabled = false;
+            btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
         }
     }
 </script>

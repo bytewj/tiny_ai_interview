@@ -1,27 +1,26 @@
 package com.surenhao.backend.handler;
 
-import cn.dev33.satoken.exception.NotLoginException;
-import cn.dev33.satoken.util.SaResult;
+import com.surenhao.backend.common.Result;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 拦截：未登录异常
-    @ExceptionHandler(NotLoginException.class)
-    public SaResult handlerNotLoginException(NotLoginException nle) {
-        // 打印一行日志即可，不需要打印堆栈
-        System.out.println("捕获未登录异常：" + nle.getMessage());
-
-        // 返回给前端 401 状态码
-        return SaResult.get(401, "请先登录", null);
+    // 拦截我们自己抛出的 "401" 异常
+    @ExceptionHandler(RuntimeException.class)
+    public Result handlerRuntimeException(RuntimeException e) {
+        // 如果是 401 异常
+        if ("401".equals(e.getMessage())) {
+            return Result.get(401, "您未登录或登录已过期", null);
+        }
+        e.printStackTrace();
+        return Result.error(e.getMessage());
     }
 
-    // 拦截：其他所有异常 (兜底)
     @ExceptionHandler(Exception.class)
-    public SaResult handlerException(Exception e) {
-        e.printStackTrace(); // 打印堆栈以便调试
-        return SaResult.error(e.getMessage());
+    public Result handlerException(Exception e) {
+        e.printStackTrace();
+        return Result.error("系统内部异常");
     }
 }
