@@ -19,10 +19,10 @@
         .login-box button:hover { background: #06ad56; }
 
         /* --- 主界面 --- */
-        .app-container { width: 900px; height: 650px; background: #fff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; overflow: hidden; display: none; }
+        .app-container { width: 950px; height: 700px; background: #fff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; overflow: hidden; display: none; }
 
         /* 左侧边栏 */
-        .sidebar { width: 260px; background: #f7f7f7; border-right: 1px solid #d6d6d6; display: flex; flex-direction: column; }
+        .sidebar { width: 280px; background: #f7f7f7; border-right: 1px solid #d6d6d6; display: flex; flex-direction: column; }
         .my-profile { padding: 20px; background: #eee; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e0e0e0; }
         .my-avatar { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; }
         .user-list { flex: 1; overflow-y: auto; }
@@ -34,11 +34,14 @@
         .u-name { font-size: 14px; color: #000; font-weight: 500; }
         .u-role { font-size: 12px; color: #666; margin-top: 2px; }
 
-        /* AI 按钮区域 */
-        .ai-section { padding: 15px; border-top: 1px solid #d6d6d6; background: #fcfcfc; text-align: center; }
-        .ai-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        /* 左下角 AI 区域 */
+        .ai-section { padding: 10px; border-top: 1px solid #d6d6d6; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+        .ai-btn { width: 100%; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; }
         .ai-btn:active { transform: scale(0.98); }
-        .ai-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .ai-chat-box { height: 180px; background: #f0f2f5; padding: 10px; border-radius: 6px; font-size: 12px; overflow-y: auto; color: #333; line-height: 1.6; border: 1px solid #e0e0e0; }
+        .ai-input-row { display: flex; gap: 5px; }
+        .ai-input { flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; outline: none; }
+        .ai-send-btn { padding: 6px 12px; background: #07c160; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
         /* 右侧聊天窗 */
         .chat-window { flex: 1; display: flex; flex-direction: column; background: #f5f5f5; }
@@ -85,8 +88,16 @@
         </div>
 
         <div class="ai-section">
-            <button class="ai-btn" onclick="getAiReport()">🚀 生成 AI 面试报告</button>
-            <div style="font-size:10px; color:#888; margin-top:5px;">基于 CompletableFuture 并行编排</div>
+            <button class="ai-btn" onclick="getAiReport()">🚀 生成面试表现报告</button>
+
+            <hr style="border:0; border-top:1px dashed #eee; margin:5px 0;">
+
+            <div style="font-size:12px; font-weight:bold;">职业规划助手</div>
+            <div id="aiResponse" class="ai-chat-box">您可以询问任何职业规划问题...</div>
+            <div class="ai-input-row">
+                <input type="text" id="aiInput" class="ai-input" placeholder="输入问题..." onkeydown="handleAiEnter(event)">
+                <button class="ai-send-btn" onclick="sendToAi()">发送</button>
+            </div>
         </div>
     </div>
 
@@ -110,27 +121,24 @@
 
     // 后端接口地址
     const API_BASE = 'http://localhost:8080/api';
-    // 本地存储 Token 的 Key (不再叫 satoken，显得更专业)
+    // 本地存储 Token 的 Key
     const TOKEN_KEY = 'app_token';
 
     // ✅ 页面加载即检查：是否已登录
     checkLogin();
 
     // -----------------------------------------------------
-    // 1. 登录与鉴权逻辑 (手写 Token + Header 传递)
+    // 1. 登录与鉴权逻辑
     // -----------------------------------------------------
-
     async function checkLogin() {
         const token = localStorage.getItem(TOKEN_KEY);
-        if(!token) return; // 没 Token，停在登录页
+        if(!token) return;
 
         try {
-            // 🔥 重点：Header 使用 "Authorization"
             const res = await fetch(`${API_BASE}/auth/info`, {
                 headers: { 'Authorization': token }
             });
 
-            // 如果拦截器/AOP 发现无效，会返回 401
             if (res.status !== 200) throw new Error("Token失效");
 
             const result = await res.json();
@@ -158,7 +166,6 @@
             const result = await res.json();
 
             if(result.code === 200) {
-                // 保存 Token
                 localStorage.setItem(TOKEN_KEY, result.data.token);
                 enterApp(result.data.user);
             } else {
@@ -174,16 +181,13 @@
 
     function enterApp(user) {
         currentUser = user;
-        // 渲染个人信息
         document.getElementById('myAvatar').src = user.avatar;
         document.getElementById('myNickname').innerText = user.nickname;
         document.getElementById('myRoleTag').innerText = user.role === 1 ? '求职者' : 'HR';
 
-        // 切换界面
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
 
-        // 初始化业务
         initWebSocket();
         loadContacts();
     }
@@ -191,10 +195,8 @@
     // -----------------------------------------------------
     // 2. 核心业务：联系人与聊天
     // -----------------------------------------------------
-
     async function loadContacts() {
         const token = localStorage.getItem(TOKEN_KEY);
-        // 调用接口也必须带 Header
         const res = await fetch(`${API_BASE}/auth/contacts`, {
             headers: { 'Authorization': token }
         });
@@ -221,11 +223,8 @@
 
     function selectChat(user, domElement) {
         targetUser = user;
-        // 样式切换
         document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
         domElement.classList.add('active');
-
-        // 切换聊天框
         document.getElementById('chatTitle').innerText = user.nickname;
         document.getElementById('msgBox').innerHTML = '';
         loadHistory();
@@ -236,11 +235,8 @@
         const token = localStorage.getItem(TOKEN_KEY);
         const url =(`${API_BASE}/chat/history?myId=${currentUser.id}&myType=${currentUser.role}&toId=${targetUser.id}&toType=${targetUser.role}`);
 
-        const res = await fetch(url, {
-            headers: { 'Authorization': token }
-        });
+        const res = await fetch(url, { headers: { 'Authorization': token } });
         const list = await res.json();
-
         list.forEach(msg => {
             const isMe = (msg.senderId == currentUser.id);
             const avatar = isMe ? currentUser.avatar : targetUser.avatar;
@@ -255,7 +251,6 @@
         ws.onmessage = (e) => {
             try {
                 const msg = JSON.parse(e.data);
-                // 只有当我在看这个人时，才渲染消息
                 if(targetUser && msg.senderId === targetUser.id) {
                     renderMsg(msg.content, false, targetUser.avatar);
                 }
@@ -277,8 +272,6 @@
             content: text
         };
         ws.send(JSON.stringify(msg));
-
-        // 自己发的消息立马显示
         renderMsg(text, true, currentUser.avatar);
         input.value = '';
     }
@@ -300,53 +293,83 @@
     }
 
     // -----------------------------------------------------
-    // 3. AI 演示功能 (对应简历 CompletableFuture 优化)
+    // 3. AI 功能区 (并发任务 + 流式对话)
     // -----------------------------------------------------
+
+    // A. 并发任务报告
     async function getAiReport() {
         const token = localStorage.getItem(TOKEN_KEY);
         const btn = event.target;
         const oldText = btn.innerText;
-
-        // 按钮变状态，模拟等待
-        btn.innerText = "⏳ AI 分析中 (约 21s)...";
+        btn.innerText = "⏳ 分析中...";
         btn.disabled = true;
-        btn.style.background = "#ccc";
 
         try {
-            const start = Date.now();
-
-            // 调用后端的并行接口
             const res = await fetch(`${API_BASE}/ai/report`, {
                 headers: { 'Authorization': token }
             });
-
-            if(res.status === 401) throw new Error("未登录");
-            if(res.status !== 200) throw new Error("服务器繁忙");
-
+            if(res.status !== 200) throw new Error("失败");
             const result = await res.json();
-
-            // 结果展示
             const data = result.data;
-            const msg = `
-【AI 面试分析报告】
------------------------------------
-1. 岗位匹配: ${data.jobMatchAnalysis}
-2. 面试打分: ${data.interviewScore}
-3. 优缺分析: ${data.prosAndCons}
------------------------------------
-⚡ 后端耗时: ${data.totalTimeCost}
-
-(注：串行需 53s，并行优化后仅需 21s，性能提升 60%)
-            `;
-            alert(msg);
-
+            alert(`【分析完成】\n耗时: ${data.totalTimeCost}\n(串行需53s，并行仅21s)\n----------------\n${data.jobMatchAnalysis}`);
         } catch(e) {
             alert("请求失败: " + e.message);
         } finally {
-            // 恢复按钮
             btn.innerText = oldText;
             btn.disabled = false;
-            btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+        }
+    }
+
+    // B. 本地 LLM 流式对话 (已修正：去除 data: 前缀)
+    async function sendToAi() {
+        const input = document.getElementById('aiInput');
+        const output = document.getElementById('aiResponse');
+        const text = input.value.trim();
+        if(!text) return;
+
+        output.innerText = "";
+        input.value = "";
+        input.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE}/ai/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem(TOKEN_KEY)
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+
+                // 🔥 核心修正：手动解析 SSE 格式，去掉 data:
+                const lines = chunk.split('\n\n');
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        const content = line.substring(5);
+                        output.innerText += content;
+                    }
+                }
+                output.scrollTop = output.scrollHeight;
+            }
+        } catch (e) {
+            output.innerText = "Error: " + e.message;
+        } finally {
+            input.disabled = false;
+            input.focus();
+        }
+    }
+
+    function handleAiEnter(e) {
+        if(e.key === 'Enter') {
+            sendToAi();
         }
     }
 </script>
