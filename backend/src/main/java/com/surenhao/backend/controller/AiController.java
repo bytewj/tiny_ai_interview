@@ -4,12 +4,14 @@ import com.surenhao.backend.common.Result; // 引入自定义返回结果
 import com.surenhao.backend.entity.AiAnalysisResult;
 import com.surenhao.backend.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/ai")
+@CrossOrigin
 public class AiController {
 
     @Autowired

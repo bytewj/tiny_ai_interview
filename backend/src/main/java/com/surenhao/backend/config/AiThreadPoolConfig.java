@@ -1,5 +1,6 @@
 package com.surenhao.backend.config;
 
+import com.alibaba.ttl.threadpool.TtlExecutors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,7 +41,7 @@ public class AiThreadPoolConfig {
         // 拒绝策略：如果队列满了，由调用者线程自己执行（CallerRunsPolicy），保证不丢任务
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
 
-        return new ThreadPoolExecutor(
+        ThreadPoolExecutor executor =  new ThreadPoolExecutor(
                 corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
@@ -49,5 +50,6 @@ public class AiThreadPoolConfig {
                 threadFactory,
                 handler
         );
+        return TtlExecutors.getTtlExecutorService(executor);
     }
 }

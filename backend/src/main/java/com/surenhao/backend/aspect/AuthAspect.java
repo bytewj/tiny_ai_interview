@@ -33,7 +33,7 @@ public class AuthAspect {
             return point.proceed();
         }
 
-        // --- 核心逻辑 B：默认拦截 ---
+        // --- 核心逻辑 B：拦截 ---
         // 没加注解，就必须检查是否登录
         if (UserContext.get() == null) {
             throw new RuntimeException("401"); // 抛异常，由全局异常处理器捕获

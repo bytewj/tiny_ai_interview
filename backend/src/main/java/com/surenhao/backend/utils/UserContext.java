@@ -1,9 +1,10 @@
 package com.surenhao.backend.utils;
 
+import com.alibaba.ttl.TransmittableThreadLocal;
 import com.surenhao.backend.entity.SysUser;
 
 public class UserContext {
-    private static final ThreadLocal<SysUser> userHolder = new ThreadLocal<>();
+    private static final ThreadLocal<SysUser> userHolder = new TransmittableThreadLocal<>();
 
     public static void set(SysUser user) {
         userHolder.set(user);
