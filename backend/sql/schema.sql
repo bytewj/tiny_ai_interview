@@ -54,3 +54,12 @@ INSERT INTO `sys_user` (`username`, `password`, `nickname`, `avatar`, `role`) VA
                                                                                   ('candidate', '123456', '成电-王同学', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', 1),
                                                                                   ('hr_byte', '123456', '字节HR-张三', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka', 2),
                                                                                   ('hr_tencent', '123456', '腾讯HR-李四', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', 2);
+
+CREATE TABLE `sys_ai_message` (
+                                  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+                                  `user_question` text COMMENT '用户提问',
+                                  `ai_answer` text COMMENT 'AI回答(完整内容)',
+                                  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI对话历史表';

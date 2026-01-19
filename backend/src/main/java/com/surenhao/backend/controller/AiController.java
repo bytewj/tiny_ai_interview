@@ -1,13 +1,16 @@
 package com.surenhao.backend.controller;
 
+import com.surenhao.backend.annotation.Public;
 import com.surenhao.backend.common.Result; // 引入自定义返回结果
 import com.surenhao.backend.entity.AiAnalysisResult;
+import com.surenhao.backend.entity.AiChatRequest;
 import com.surenhao.backend.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -28,5 +31,15 @@ public class AiController {
         // 调用并行编排的服务
         AiAnalysisResult result = aiService.analyzeParallel();
         return Result.data(result);
+    }
+
+    /**
+     * SSE 流式对话接口
+     */
+    @Public // 或者去掉 @Public 走登录拦截
+    @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chat(@RequestBody @Validated AiChatRequest request) {
+        // 一行代码调用 Service
+        return aiService.streamChat(request.getMessage());
     }
 }
