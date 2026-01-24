@@ -2,11 +2,13 @@ package com.surenhao.backend.controller;
 
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.surenhao.backend.annotation.Public; // 引入自定义注解
-import com.surenhao.backend.common.Result;     // 引入自定义返回结果
+import com.surenhao.backend.annotation.Public;
+import com.surenhao.backend.common.Result;
 import com.surenhao.backend.entity.SysUser;
+import com.surenhao.backend.entity.LoginUser; // 引入新类
 import com.surenhao.backend.mapper.SysUserMapper;
-import com.surenhao.backend.utils.UserContext; // 引入 ThreadLocal 工具
+import com.surenhao.backend.utils.UserContext;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin // 允许跨域
+@CrossOrigin
 public class AuthController {
 
     @Autowired
@@ -28,17 +30,13 @@ public class AuthController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    /**
-     * 1. 登录接口
-     * 必须加 @Public，否则会被 AOP 拦截导致无法登录
-     */
     @Public
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> params) {
         String username = params.get("username");
         String password = params.get("password");
 
-        // 1. 校验账号密码
+        // 1. 校验账号密码 (查数据库完整实体)
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getUsername, username));
 
@@ -46,44 +44,40 @@ public class AuthController {
             return Result.error("账号或密码错误");
         }
 
-        // 2. 生成 Token (UUID)
+        // 2. 【核心修改】转换为 LoginUser，剔除密码
+        LoginUser loginUser = new LoginUser();
+        // 使用 Spring 自带工具复制属性 (属性名相同会自动复制：id, username, nickname, avatar, role)
+        BeanUtils.copyProperties(user, loginUser);
+
+        // 3. 生成 Token
         String token = UUID.randomUUID().toString().replace("-", "");
 
-        // 3. 存入 Redis (Key: login:token:xxx, Value: UserJSON, Expire: 30min)
+        // 4. 存入 Redis (只存精简后的 LoginUser JSON)
         String key = "login:token:" + token;
-        redisTemplate.opsForValue().set(key, JSON.toJSONString(user), 30, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(key, JSON.toJSONString(loginUser), 30, TimeUnit.MINUTES);
 
-        // 4. 返回结果
+        // 5. 返回结果 (返回给前端的也可以是这个精简对象)
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);
-        data.put("user", user);
+        data.put("user", loginUser); // 前端也不需要知道密码
         return Result.data(data);
     }
 
-    /**
-     * 2. 获取联系人列表
-     * 未加 @Public -> 默认需要登录
-     */
     @GetMapping("/contacts")
     public Result<List<SysUser>> getContacts() {
-        // 从 ThreadLocal 获取当前用户 ID，无需再查数据库验证 Token
+        // 从 ThreadLocal 获取当前用户 ID
         Long myId = UserContext.get().getId();
 
-        // 查询除了我之外的所有用户
+        // 查询其他人
         List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .ne(SysUser::getId, myId));
 
         return Result.data(users);
     }
 
-    /**
-     * 3. 获取当前用户信息 (用于前端自动登录/刷新)
-     * 未加 @Public -> 默认需要登录
-     */
     @GetMapping("/info")
-    public Result<SysUser> getInfo() {
-        // 直接返回 ThreadLocal 中的用户信息，性能极高
-        // 因为请求经过拦截器时，已经把 Redis 里的用户信息放进 ThreadLocal 了
+    public Result<LoginUser> getInfo() {
+        // 直接返回 ThreadLocal 中的精简信息
         return Result.data(UserContext.get());
     }
 }

@@ -1,16 +1,17 @@
 package com.surenhao.backend.utils;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import com.surenhao.backend.entity.SysUser;
+import com.surenhao.backend.entity.LoginUser; // 引入新类
 
 public class UserContext {
-    private static final ThreadLocal<SysUser> userHolder = new TransmittableThreadLocal<>();
+    // 泛型从 SysUser 改为 LoginUser
+    private static final ThreadLocal<LoginUser> userHolder = new TransmittableThreadLocal<>();
 
-    public static void set(SysUser user) {
+    public static void set(LoginUser user) {
         userHolder.set(user);
     }
 
-    public static SysUser get() {
+    public static LoginUser get() {
         return userHolder.get();
     }
 

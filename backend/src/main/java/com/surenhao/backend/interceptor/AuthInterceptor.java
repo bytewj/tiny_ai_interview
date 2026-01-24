@@ -1,7 +1,9 @@
 package com.surenhao.backend.interceptor;
 
 import com.alibaba.fastjson2.JSON;
-import com.surenhao.backend.entity.SysUser;
+import com.surenhao.backend.annotation.Public;
+import com.surenhao.backend.entity.LoginUser; // 引入新类
+import com.surenhao.backend.exception.ServiceException;
 import com.surenhao.backend.utils.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.concurrent.TimeUnit;
@@ -20,37 +23,41 @@ public class AuthInterceptor implements HandlerInterceptor {
     private StringRedisTemplate redisTemplate;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // 1. 处理 OPTIONS 预检请求 (跨域必须放行)
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (!(handler instanceof HandlerMethod)) {
+            return true;
+        }
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handlerMethod.getMethodAnnotation(Public.class) != null ||
+                handlerMethod.getBeanType().getAnnotation(Public.class) != null) {
             return true;
         }
 
-        // 2. 获取 Token (前端 Header 传 Authorization)
         String token = request.getHeader("Authorization");
         if (!StringUtils.hasText(token)) {
-            return true; // 没 Token 也放行，交给 AOP 决定是否拦截
+            throw new RuntimeException("401");
         }
 
-        // 3. 查 Redis
         String key = "login:token:" + token;
         String userJson = redisTemplate.opsForValue().get(key);
 
-        if (StringUtils.hasText(userJson)) {
-            // 4. 解析并存入 ThreadLocal
-            SysUser user = JSON.parseObject(userJson, SysUser.class);
-            UserContext.set(user);
-
-            // 5. 续期 30 分钟
-            redisTemplate.expire(key, 30, TimeUnit.MINUTES);
+        if (!StringUtils.hasText(userJson)) {
+            throw new ServiceException(401, "登录已过期，请重新登录");
         }
+
+        // 【核心修改】解析为 LoginUser 而不是 SysUser
+        LoginUser loginUser = JSON.parseObject(userJson, LoginUser.class);
+
+        // 放入 ThreadLocal
+        UserContext.set(loginUser);
+
+        redisTemplate.expire(key, 30, TimeUnit.MINUTES);
 
         return true;
     }
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        // ⚠️ 极其重要：防止内存泄漏
         UserContext.remove();
     }
 }
