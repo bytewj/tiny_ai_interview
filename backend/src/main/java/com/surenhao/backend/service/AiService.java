@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * AI 业务接口层
  */
@@ -14,7 +16,7 @@ public interface AiService {
      * 并行执行 AI 面试分析任务 (多线程处理)
      * @return 分析结果聚合对象
      */
-    AiAnalysisResult analyzeParallel();
+    CompletableFuture<AiAnalysisResult> analyzeParallel();
 
     /**
      * SSE 流式对话并持久化 (响应式处理)

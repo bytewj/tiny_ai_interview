@@ -48,4 +48,9 @@ public class Result<T> implements Serializable {
         r.setData(null);
         return r;
     }
+    // 【新增】为了兼容 Controller 中的 Result.fail(...) 调用
+    public static <T> Result<T> fail(String msg) {
+        return error(500, msg);
+    }
+
 }

@@ -419,18 +419,29 @@
             const res = await fetch(`${API_BASE}/ai/report`, {
                 headers: { 'Authorization': localStorage.getItem(TOKEN_KEY) }
             });
-            if(res.status !== 200) throw new Error("服务器异常");
+
+            if (!res.ok) {
+                throw new Error("服务器繁忙 (Status: " + res.status + ")");
+            }
+
             const result = await res.json();
-            const data = result.data;
-            alert(`【AI 分析报告】\n⏱️ 总耗时: ${data.totalTimeCost}\n(串行需 53s，并行仅 21s)\n----------------\n📌 岗位匹配: ${data.jobMatchAnalysis}\n📌 面试打分: ${data.interviewScore}\n📌 优劣分析: ${data.prosConsAnalysis}`);
+
+            if (result.code === 200) {
+                const data = result.data;
+
+                // ✅【修改点】严格对应你后端返回的 JSON 字段名
+                alert(`【AI 面试分析报告】\n\n⏱️ 总耗时: ${data.totalTimeCost}\n----------------\n📌 岗位匹配: ${data.jobMatchAnalysis}\n📌 面试打分: ${data.interviewScore}\n📌 优劣分析: ${data.prosAndCons}`);
+
+            } else {
+                alert("生成失败: " + result.msg);
+            }
         } catch(e) {
-            alert("请求失败: " + e.message);
+            alert("请求异常: " + e.message);
         } finally {
             btn.innerText = oldText;
             btn.disabled = false;
         }
     }
-
     // B. AI 流式对话 (Fetch + AbortController)
     async function sendToAi() {
         const input = document.getElementById('aiInput');

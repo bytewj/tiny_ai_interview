@@ -39,32 +39,103 @@ public class AiServiceImpl implements AiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
 
+    /**
+     * 并行执行三个独立的 AI 服务
+     */
     @Override
-    public AiAnalysisResult analyzeParallel() {
+    public CompletableFuture<AiAnalysisResult> analyzeParallel() {
         long start = System.currentTimeMillis();
 
-        // 2.【修改点】类型改为 LoginUser
-        LoginUser currentUser = UserContext.get();
-        log.info("=== 开始并行执行 AI 分析任务 (用户: {}) ===", currentUser.getNickname());
+        // 1. 【主线程】提取上下文（必须在这里取，否则子线程拿不到）
+        final LoginUser currentUser = UserContext.get();
+        String nickname = (currentUser != null) ? currentUser.getNickname() : "未知用户";
+        log.info("=== [主线程] 开始并行调度三个 AI 服务 (用户: {}) ===", nickname);
 
-        CompletableFuture<String> taskA = CompletableFuture.supplyAsync(() ->
-                mockAiInference("岗位匹配度计算", 20), executor);
+        // 2. 【异步】服务一：岗位匹配度计算
+        CompletableFuture<String> matchFuture = CompletableFuture.supplyAsync(() ->
+                callMatchDegreeService(currentUser), executor);
 
-        CompletableFuture<String> taskB = CompletableFuture.supplyAsync(() ->
-                mockAiInference("面试表现打分", 12), executor);
+        // 3. 【异步】服务二：面试表现打分
+        CompletableFuture<String> scoreFuture = CompletableFuture.supplyAsync(() ->
+                callInterviewScoringService(currentUser), executor);
 
-        CompletableFuture<String> taskC = CompletableFuture.supplyAsync(() ->
-                mockAiInference("优缺点分析", 21), executor);
+        // 4. 【异步】服务三：优缺点分析
+        CompletableFuture<String> analysisFuture = CompletableFuture.supplyAsync(() ->
+                callProsConsAnalysisService(currentUser), executor);
 
-        CompletableFuture.allOf(taskA, taskB, taskC).join();
+        // 5. 【编排】等待三个任务全部完成，组装结果
+        return CompletableFuture.allOf(matchFuture, scoreFuture, analysisFuture)
+                .thenApply(v -> {
+                    try {
+                        // 因为 allOf 保证了都完成，这里 get() 是瞬时的，不会阻塞
+                        String matchResult = matchFuture.get();
+                        String scoreResult = scoreFuture.get();
+                        String analysisResult = analysisFuture.get();
 
+                        long totalTime = System.currentTimeMillis() - start;
+                        log.info("=== [异步回调] 三项服务全部聚合完成，总耗时: {} ms ===", totalTime);
+
+                        return new AiAnalysisResult(matchResult, scoreResult, analysisResult, totalTime + " ms");
+                    } catch (Exception e) {
+                        log.error("AI 服务聚合结果失败", e);
+                        // 兜底策略：返回错误提示，防止前端崩掉
+                        return new AiAnalysisResult("计算失败", "评分失败", "分析失败", "0 ms");
+                    }
+                });
+    }
+
+    // ================== 下面是三个独立的具体业务逻辑 ==================
+
+    /**
+     * 服务 A：调用岗位匹配度计算
+     * 这里写具体的 HTTP 请求逻辑，比如调 Python 的 /api/match
+     */
+    private String callMatchDegreeService(LoginUser user) {
+        log.info(">>> [服务A-匹配度] 开始执行... 线程: {}", Thread.currentThread().getName());
         try {
-            long totalTime = System.currentTimeMillis() - start;
-            log.info("=== 并行任务结束，总耗时: {} ms ===", totalTime);
-            return new AiAnalysisResult(taskA.get(), taskB.get(), taskC.get(), totalTime + " ms");
+            // TODO: 这里替换成你真实的 HTTP 调用代码
+            // String json = HttpUtils.post("http://ai-service/match", params);
+            // return parse(json);
+
+            Thread.sleep(2000); // 模拟耗时 2秒
+            return "95% (高匹配)";
         } catch (Exception e) {
-            log.error("AI 任务聚合失败", e);
-            return new AiAnalysisResult("失败", "失败", "失败", "异常");
+            log.error("匹配度计算服务异常", e);
+            return "计算服务不可用";
+        }
+    }
+
+    /**
+     * 服务 B：调用面试表现打分
+     * 这里写具体的 HTTP 请求逻辑，比如调 Python 的 /api/score
+     */
+    private String callInterviewScoringService(LoginUser user) {
+        log.info(">>> [服务B-面试打分] 开始执行... 线程: {}", Thread.currentThread().getName());
+        try {
+            // TODO: 这里替换成你真实的 HTTP 调用代码
+
+            Thread.sleep(3000); // 模拟耗时 3秒
+            return "88分 (表现良好)";
+        } catch (Exception e) {
+            log.error("面试打分服务异常", e);
+            return "打分服务不可用";
+        }
+    }
+
+    /**
+     * 服务 C：调用优缺点分析
+     * 这里写具体的 HTTP 请求逻辑，比如调 Python 的 /api/analysis
+     */
+    private String callProsConsAnalysisService(LoginUser user) {
+        log.info(">>> [服务C-优缺点] 开始执行... 线程: {}", Thread.currentThread().getName());
+        try {
+            // TODO: 这里替换成你真实的 HTTP 调用代码
+
+            Thread.sleep(1500); // 模拟耗时 1.5秒
+            return "优点：逻辑清晰；缺点：语速稍快";
+        } catch (Exception e) {
+            log.error("优缺点分析服务异常", e);
+            return "分析服务不可用";
         }
     }
 
@@ -116,18 +187,6 @@ public class AiServiceImpl implements AiService {
                         saveToDb(currentUserId, question, fullAnswerBuilder.toString());
                     }
                 });
-    }
-
-    private String mockAiInference(String taskName, int seconds) {
-        // 4.【修改点】类型改为 LoginUser
-        LoginUser user = UserContext.get();
-        log.info(">>> [{}] 开始 (用户: {}, 线程: {})", taskName, user.getNickname(), Thread.currentThread().getName());
-        try {
-            Thread.sleep(seconds * 1000L);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return String.format("[%s] 完成 | 耗时%ds", taskName, seconds);
     }
 
     private void saveToDb(Long userId, String question, String fullAnswer) {
